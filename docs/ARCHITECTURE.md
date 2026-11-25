@@ -1,54 +1,39 @@
-# Architecture
+# Architecture Summary
 
-## System overview
+> [!NOTE]
+> For detailed per-layer documentation, see [System Architecture](03-architecture/SYSTEM_ARCHITECTURE.md), [Backend Architecture](03-architecture/BACKEND_ARCHITECTURE.md), [Frontend Architecture](03-architecture/FRONTEND_ARCHITECTURE.md), and [Database Schema](05-database-and-api/DATABASE_SCHEMA.md).
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                         Browser                             │
-│  Next.js 16 (Vercel)  ←── Supabase Auth ───► Supabase DB  │
-│  React 19 / Tailwind                                        │
-└──────────────────────────────┬──────────────────────────────┘
-                               │ HTTPS (REST)
-                               ▼
-┌─────────────────────────────────────────────────────────────┐
-│               FastAPI Backend (Render)                      │
-│                                                             │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────┐  │
-│  │  Eligibility │  │  ChangeLens  │  │  AI Assistant    │  │
-│  │  Engine      │  │  Comparison  │  │  (RAG / Chat)    │  │
-│  │  (pure Python│  │  Engine      │  │                  │  │
-│  │  no AI)      │  │  (pure Python│  │  OpenAI / Claude │  │
-│  └──────────────┘  └──────────────┘  └──────────────────┘  │
-│                                                             │
-│  ┌─────────────────────────────────────────────────────┐    │
-│  │  SQLAlchemy 2.0 async (asyncpg)                     │    │
-│  └───────────────────────┬─────────────────────────────┘    │
-└──────────────────────────┼──────────────────────────────────┘
-                           │
-              ┌────────────┴────────────┐
-              │                         │
-      ┌───────▼───────┐        ┌────────▼────────┐
-      │  PostgreSQL   │        │ Supabase Storage │
-      │  (Supabase)   │        │ (official docs / │
-      │  JSONB rules  │        │  student uploads)│
-      └───────────────┘        └─────────────────┘
+---
+
+## System Overview
+
+```mermaid
+flowchart LR
+    U["Student / Reviewer / Admin"] --> FE["Next.js 16 (Vercel) — React 19 / Tailwind v4"]
+    FE <-->|"Auth & SSR Sessions"| SUPA_AUTH["Supabase Auth (/auth/v1/user)"]
+    FE -->|"HTTPS REST + Bearer JWT"| BE["FastAPI Backend (Render / Docker)"]
+    BE -->|"Verify JWT"| SUPA_AUTH
+    BE --> ENG["Pure Python Engines (EligibilityEngine & PolicyComparisonEngine)"]
+    BE --> AI["OpenAIProvider (gpt-4o / gpt-4o-mini)"]
+    BE -->|"SQLAlchemy 2.0 Async"| PG[("Supabase PostgreSQL 16 (22 Tables, JSONB)")]
+    BE -.->|"Configured; upload SDK not wired"| STOR["Supabase Storage"]
 ```
 
 ---
 
-## Core design principles
+## Core Design Principles
 
-### 1. Deterministic evaluation, AI extraction
+### 1. Deterministic Evaluation, AI Extraction
 
-The eligibility engine (`app/modules/eligibility/engine.py`) and comparison engine (`app/modules/changelens/comparison_engine.py`) are pure Python — no LLM calls. This guarantees:
+The eligibility engine (`backend/app/modules/eligibility/engine.py`) and comparison engine (`backend/app/modules/changelens/comparison_engine.py`) are **pure Python** — no LLM calls. This guarantees:
 
 - Reproducible results for the same input
-- Auditable logic (every rule evaluation has an explanation string)
+- Auditable logic (every rule evaluation produces an explanation string)
 - No hallucinated pass/fail decisions
 
-LLMs are only used to **extract and structure** rules from PDF documents into a machine-readable JSONB condition format. Human reviewers then approve or reject extracted rules before they go live.
+LLMs (`OpenAIProvider.extract_structured`) are scoped to extracting and structuring rules from documents into Pydantic-validated JSONB conditions (`ExtractedSchemeRules`), which human reviewers approve or reject before rules become active.
 
-### 2. Rule condition schema
+### 2. Rule Condition Schema
 
 Extracted eligibility rules are stored as JSONB in `scheme_rules.condition`:
 
@@ -61,103 +46,40 @@ Extracted eligibility rules are stored as JSONB in `scheme_rules.condition`:
 }
 ```
 
-Compound rules use `logic` + `sub_conditions`:
+Supported operators in `EligibilityEngine.OPERATOR_MAP`: `lte`, `lt`, `gte`, `gt`, `eq`, `neq`, `in`, `not_in`. *(Compound `and`/`or` logic is present in `engine.py`, though 2 unit tests currently fail due to sub-condition field mapping.)*
 
-```json
-{
-  "logic": "or",
-  "sub_conditions": [
-    { "operator": "eq", "value": "SC" },
-    { "operator": "eq", "value": "ST" }
-  ]
-}
-```
+### 3. Schema Versioning
 
-Supported operators: `lte`, `lt`, `gte`, `gt`, `eq`, `neq`, `in`, `not_in`.
+Every uploaded official document creates a `SchemeDocument`, and rules belong to a `SchemeVersion`. `Scheme.latest_version_id` provides fast summary lookups. `PolicyComparison` and `PolicyChangeEvent` persist diffs between two approved versions.
 
-### 3. Schema versioning
+### 4. Auth Model
 
-Every uploaded official document creates a new `SchemeVersion`. Rules are attached to versions, not directly to the scheme. The `Scheme.latest_version_id` denormalisation provides fast listing without joining on versions.
+Authentication is delegated to Supabase Auth. FastAPI validates Bearer tokens remotely via `GET {SUPABASE_URL}/auth/v1/user` (`app/core/security.py`), and enforces 5-role RBAC via `require_roles()` (`app/core/permissions.py`).
 
-Policy comparisons (`PolicyComparison`) record the diff between two approved versions as `PolicyChangeEvent` rows, persisted for audit trails.
+### 5. AI Provider Abstraction
 
-### 4. Auth model
-
-Authentication is entirely delegated to Supabase Auth (JWT). The FastAPI backend validates tokens by calling Supabase's `/auth/v1/user` endpoint. No password hashing in the application layer.
-
-Role-based access control is implemented in `app/core/permissions.py` using a `require_roles()` FastAPI dependency.
-
-### 5. AI provider abstraction
-
-`app/ai/providers/base.py` defines an abstract `AIProvider` interface. `openai_provider.py` implements it for OpenAI. Adding Anthropic or any other provider requires implementing the interface and updating the factory in `app/core/config.py`. The switch is controlled by the `AI_PROVIDER` env var.
+`app/ai/providers/base.py` defines the `AIProvider` abstract interface. Currently `openai_provider.py` (`OpenAIProvider`) is implemented; `anthropic` settings exist in `config.py` and `requirements.txt`, with `AnthropicProvider` planned.
 
 ---
 
-## Database models
+## Module Structure (14 Routers + Empty Worker Stub)
 
-| Table | Purpose |
-|---|---|
-| `schemes` | Master scheme record (denormalized summary) |
-| `scheme_sources` | Official source documents / URLs |
-| `scheme_versions` | Versioned rule snapshots per document upload |
-| `scheme_documents` | Uploaded PDFs stored in Supabase Storage |
-| `scheme_rules` | Individual extracted eligibility rules (JSONB condition) |
-| `policy_comparisons` | Recorded comparisons between two versions |
-| `policy_change_events` | Per-rule change events from a comparison |
-| `users` | App user records (linked to Supabase Auth UID) |
-| `applications` | Student application records |
-| `documents` | Student-uploaded support documents |
-
----
-
-## Module structure
-
-```
-app/modules/
-├── auth/           JWT token validation, role extraction
-├── users/          User profile CRUD
-├── profiles/       Student academic/demographic profile
-├── schemes/        Scheme listing, search, bookmarks
-├── eligibility/    Rule evaluation engine + router
-├── documents/      PDF upload, OCR, extraction trigger
-├── changelens/     Comparison engine + router
-├── impact/         Impact assessment (planned Phase 9)
-├── lifemap/        Action plan generation and tracking
-├── applications/   Student application status tracking
-├── assistant/      RAG chatbot with document citations
+```text
+backend/app/modules/
+├── auth/           Auth status endpoint (Supabase handles auth)
+├── users/          User profile lookup (/users/me)
+├── profiles/       Student academic/demographic profile CRUD
+├── schemes/        Scheme listing, search, admin CRUD, bookmarking
+├── eligibility/    Deterministic rule evaluation engine + router
+├── documents/      File validation, PyMuPDF/OCR/DOCX extraction + upload queue
+├── changelens/     Deterministic comparison engine + router
+├── impact/         StudentImpact reader (/impacts/me; computation planned)
+├── lifemap/        Action plan creation and listing
+├── applications/   Manual application status tracking + audit history
+├── assistant/      Multilingual OpenAI chat (EN/TE/HI; RAG planned)
 ├── reviews/        Human review queue for extracted rules
-├── notifications/  Email/in-app notification stubs
-└── monitoring/     Admin health check, job listing
+├── notifications/  Placeholder stub (/notifications/me)
+└── monitoring/     Admin system-health & job list stub
 ```
 
----
-
-## Data flow: document → live rules
-
-```
-Admin uploads PDF
-        │
-        ▼
-Document stored in Supabase Storage
-        │
-        ▼
-Background worker: OCR + text extraction (PyMuPDF + Tesseract)
-        │
-        ▼
-LLM extraction: text → structured SchemeRule JSONB conditions
-        │
-        ▼
-SchemeVersion created (is_approved=false)
-        │
-        ▼
-Reviewer queue: human approves/rejects each rule
-        │
-        ▼
-SchemeVersion marked is_approved=true, is_active=true
-        │
-        ▼
-Scheme.latest_version_id updated
-        │
-        ▼
-Students can now run eligibility checks against the new rules
-```
+See [Database Schema](05-database-and-api/DATABASE_SCHEMA.md) for all **22 tables** and [Project Audit](PROJECT_AUDIT.md) for exact verification status.
