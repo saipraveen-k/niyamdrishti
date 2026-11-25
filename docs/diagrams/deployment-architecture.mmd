@@ -1,0 +1,9 @@
+%% deployment-architecture: source of truth is docs/09-deployment-and-devops/DEPLOYMENT_OVERVIEW.md
+flowchart LR
+    DEV["GitHub Repository (main / develop)"] --> CI["GitHub Actions (.github/workflows/ci.yml): pytest, tsc, build, pip-audit"]
+    DEV -.->|"GitHub Integration Auto-Deploy (when connected)"| VERCEL["Vercel (sin1) — Next.js 16 Frontend"]
+    DEV -.->|"Render Auto-Deploy (render.yaml autoDeploy: true)"| RENDER["Render (singapore) — FastAPI Backend (Uvicorn x2)"]
+    VERCEL -->|"/api/* rewrite & NEXT_PUBLIC_API_URL"| RENDER
+    VERCEL <-->|"Auth & SSR Sessions"| SUPA["Supabase (ap-southeast-1): Auth + PostgreSQL 16 + Storage"]
+    RENDER <-->|"Verify JWT (/auth/v1/user) & Async SQLAlchemy"| SUPA
+    RENDER -->|"Optional AI Calls"| OAI["OpenAI API"]

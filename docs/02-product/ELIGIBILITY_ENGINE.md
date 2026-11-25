@@ -69,7 +69,7 @@ flowchart TD
 
 > [!WARNING]
 > Two issues were directly observed during repository verification:
-> 1. **Compound Rule Bug**: In `_evaluate_compound` (`engine.py` lines 249–254), `temp_rule` uses `condition.get("rule_category", "other")` and `sub.get("rule_key", "sub")`, which fail to map to the parent rule's profile field. Both `test_compound_and_all_pass` and `test_compound_or_one_passes` in `tests/test_eligibility_engine.py` currently **fail** with `UNKNOWN` instead of `PASSED`.
+> 1. ~~**Compound Rule Bug**~~ — **Fixed**: compound `and`/`or` rules now inherit the parent rule's category/key, and `test_compound_and_all_pass` / `test_compound_or_one_passes` pass (all 15 eligibility tests green).
 > 2. **Frontend–Backend Schema Mismatch**: `frontend/src/app/eligibility/page.tsx` reads `report.criteria` and matches uppercase `"PASSED"` / `"FAILED"`, while the backend returns `criterion_results` and lowercase `"passed"` / `"failed"`. Also, on missing profile, backend returns `422` while frontend checks for `404`.
 
 ---

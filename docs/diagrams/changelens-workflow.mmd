@@ -1,0 +1,12 @@
+%% changelens-workflow: source of truth is docs/02-product/CHANGELENS.md
+flowchart TD
+    A["Two Approved SchemeVersions (old_version_id, new_version_id)"] --> B["POST /api/v1/policy-comparisons"]
+    B --> C["Fetch approved SchemeRule rows for each version"]
+    C --> D["PolicyComparisonEngine.compare(old_rules, new_rules)"]
+    D --> E["Index rules by (rule_category, rule_key)"]
+    E --> F["old - new → REMOVED"]
+    E --> G["new - old → ADDED"]
+    E --> H["old & new → Normalize & compare conditions → MODIFIED"]
+    F & G & H --> I["Assign Severity (HIGH / MEDIUM / LOW) & Sort HIGH first"]
+    I --> J["Persist PolicyComparison + PolicyChangeEvent rows"]
+    J --> K["Return PolicyComparisonResponse with human_summary & source citations"]

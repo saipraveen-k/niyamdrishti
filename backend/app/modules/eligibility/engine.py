@@ -168,7 +168,9 @@ class EligibilityEngine:
 
         # Handle compound conditions
         if condition.get("logic") in ("and", "or"):
-            result, explanation = self._evaluate_compound(condition, profile, missing_fields)
+            result, explanation = self._evaluate_compound(
+                condition, profile, missing_fields, rule_category, rule_key
+            )
         elif student_value is None:
             result = EligibilityResult.UNKNOWN
             explanation = f"Cannot evaluate '{rule_key}': missing profile data"
@@ -236,6 +238,8 @@ class EligibilityEngine:
         condition: dict,
         profile: Dict[str, Any],
         missing_fields: List[str],
+        parent_category: str = "other",
+        parent_key: str = "",
     ) -> tuple[EligibilityResult, str]:
         logic = condition.get("logic", "and")
         sub_conditions = condition.get("sub_conditions", [])
@@ -245,10 +249,12 @@ class EligibilityEngine:
 
         sub_results = []
         for sub in sub_conditions:
-            # Create a temporary rule-like dict for sub_conditions
+            # Sub-conditions inherit the parent rule's category/key (and therefore
+            # its profile field) unless they name their own, e.g. a compound rule
+            # mixing income and marks.
             temp_rule = {
-                "rule_category": condition.get("rule_category", "other"),
-                "rule_key": sub.get("rule_key", "sub"),
+                "rule_category": sub.get("rule_category", parent_category),
+                "rule_key": sub.get("rule_key", parent_key),
                 "condition": sub,
                 "is_mandatory": True,
             }

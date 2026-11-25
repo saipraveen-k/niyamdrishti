@@ -6,7 +6,7 @@ This document describes verified limitations, incomplete wiring, and areas for i
 
 ## 1. Eligibility Evaluation (`backend/app/modules/eligibility/`)
 
-- **Compound Rules Bug (2 Failing Unit Tests)**: `EligibilityEngine._evaluate_compound()` constructs `temp_rule` with `condition.get("rule_category", "other")` and `sub.get("rule_key", "sub")`, which fails to map to the parent rule's profile field. Both `test_compound_and_all_pass` and `test_compound_or_one_passes` currently fail (`UNKNOWN` instead of `PASSED`).
+- ~~**Compound Rules Bug**~~ — **Fixed**: compound `and`/`or` rules now inherit the parent rule's category/key, and `test_compound_and_all_pass` / `test_compound_or_one_passes` pass (all 15 eligibility tests green).
 - **Partial Profile Field Mapping**: `_get_profile_field()` covers `income`, `marks`, `cgpa`, `age`, `category`, `disability`, `domicile`, `state`, `course`, and `education_level`. Rules outside these categories return `UNKNOWN`.
 - **Unimplemented Operators**: `contains` and `any` appear in `engine.py`'s docstring (and `any` in `RuleOperator`) but are missing from `OPERATOR_MAP`, returning `UNKNOWN`.
 - **Directional Match Score**: `match_score` divides `passed_mandatory` by `passed_mandatory + failed_mandatory`—excluding `unknown` mandatory rules from the denominator.

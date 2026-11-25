@@ -13,7 +13,7 @@ This guide prepares the team for technical Q&A with hackathon judges, ensuring c
 
 ### Q2: "What is working today vs. what is still in progress?"
 - **Answer** *(honest & transparent)*:
-  - **Working & tested**: Core FastAPI app, 22-table SQLAlchemy schema, Supabase Auth JWT + RBAC middleware, `PolicyComparisonEngine` (14/14 unit tests pass), `EligibilityEngine` single-rule & score logic (13/15 pass; we identified a compound-rule key-propagation bug in `_evaluate_compound` affecting 2 tests), seed script for 4 AP/Telangana/Central schemes, and Next.js 16 frontend (`tsc --noEmit` passes).
+  - **Working & tested**: Core FastAPI app, 22-table SQLAlchemy schema, Supabase Auth JWT + RBAC middleware, `PolicyComparisonEngine` (14/14 unit tests pass), `EligibilityEngine` single-rule, compound and score logic (15/15 pass), seed script for 4 AP/Telangana/Central schemes, and Next.js 16 frontend (`tsc --noEmit` passes).
   - **In progress / next phase**: Wiring `app/workers/` to execute queued document extraction jobs, uploading document bytes to Supabase Storage, automating `StudentImpact` generation on policy comparisons, connecting vector RAG retrieval for assistant citations, and aligning 5 frontend–backend endpoint contracts.
 
 ### Q3: "How do you handle privacy for sensitive student data like caste or income?"

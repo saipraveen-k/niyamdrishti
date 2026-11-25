@@ -18,7 +18,7 @@ Backend unit tests verify the two deterministic core engines—`EligibilityEngin
 - **Income & Marks**: Passes/fails against thresholds; returns `UNKNOWN` + `missing_fields` when absent.
 - **Category (`in` operator)**: Case-insensitive list matching.
 - **Multi-rule & Mandatory flag**: All mandatory rules pass vs. one mandatory failure; optional (`is_mandatory=False`) failure does not fail overall result.
-- **Compound (`and`/`or`)**: `test_compound_and_all_pass` and `test_compound_or_one_passes` (currently **failing** due to `_evaluate_compound` field mapping bug).
+- **Compound (`and`/`or`)**: `test_compound_and_all_pass` and `test_compound_or_one_passes` (passing — the field-mapping bug is fixed).
 - **Match score & Edge cases**: 50% score calculation, empty rule list (`UNKNOWN`), unsupported operator (`between` → `UNKNOWN`).
 
 ---

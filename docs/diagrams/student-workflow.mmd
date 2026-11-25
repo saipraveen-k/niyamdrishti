@@ -1,0 +1,14 @@
+%% student-workflow: student journey from registration to application tracking
+flowchart TD
+    A["Register (Supabase Auth: email or Google OAuth)"] --> B["Create profile<br/>POST /api/v1/profiles"]
+    B --> C["Academic, income & category details<br/>PATCH /api/v1/profiles/me"]
+    C --> D["Browse & filter published schemes<br/>(state, level, category)"]
+    D --> E["Run eligibility check<br/>POST /api/v1/eligibility/evaluate"]
+    E --> F{"Eligible?"}
+    F -- "No / Partial" --> G["See failed rules with source evidence"]
+    G --> D
+    F -- "Yes" --> H["Save scheme & inspect ChangeLens diffs"]
+    H --> I["Create LifeMap action plan<br/>POST /api/v1/action-plans"]
+    I --> J["Complete ordered tasks<br/>(documents, steps, deadlines)"]
+    J --> K["Track application<br/>POST / PATCH /api/v1/applications"]
+    K --> L["Ask AI Assistant (EN / TE / HI)<br/>for cited answers"]

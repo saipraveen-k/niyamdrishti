@@ -43,8 +43,7 @@ The repository contains an active initial codebase across `frontend/` (Next.js 1
 
 ### Critical Discrepancies Found in Code Inspection
 
-1. **Compound Condition Bug in `EligibilityEngine`**:
-   - In `backend/app/modules/eligibility/engine.py` (`_evaluate_compound`, lines 249–254), `temp_rule` passes `condition.get("rule_category", "other")` and `sub.get("rule_key", "sub")`. Because neither `condition` nor `sub` carries `rule_category`/`rule_key` in standard rules, `_get_profile_field` returns `None`, causing compound `and`/`or` rules to return `UNKNOWN`. This causes 2 unit tests in `test_eligibility_engine.py` to fail.
+1. ~~**Compound Condition Bug in `EligibilityEngine`**~~ — **Fixed**: compound `and`/`or` rules now inherit the parent rule's category/key, and `test_compound_and_all_pass` / `test_compound_or_one_passes` pass (all 15 eligibility tests green).
 2. **Frontend–Backend API Contract Mismatches**:
    - **ChangeLens**: `frontend/src/app/changelens/page.tsx` calls `GET /changelens/compare/{scheme_id}`, while backend exposes `POST /api/v1/policy-comparisons` and `GET /api/v1/policy-comparisons/{comparison_id}`.
    - **LifeMap**: `frontend/src/app/lifemap/page.tsx` calls `GET /lifemap/plans` and `PATCH /lifemap/tasks/{task_id}`, while backend exposes `GET /api/v1/action-plans/me` and `POST /api/v1/action-plans`.

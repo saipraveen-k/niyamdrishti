@@ -7,7 +7,7 @@
 
 ## Eligibility Evaluation
 
-- **Compound Rules Bug**: `EligibilityEngine._evaluate_compound()` passes `"other"` / `"sub"` to `_evaluate_rule()` instead of the parent rule's category/key, causing 2 unit tests (`test_compound_and_all_pass`, `test_compound_or_one_passes`) to fail (`UNKNOWN`).
+- ~~**Compound Rules Bug**~~ — **Fixed**: compound `and`/`or` rules now inherit the parent rule's category/key, and `test_compound_and_all_pass` / `test_compound_or_one_passes` pass (all 15 eligibility tests green).
 - **Partial Profile Field Coverage**: `_get_profile_field()` maps `income`, `marks`, `cgpa`, `age`, `category`, `disability`, `domicile`, `state`, `course`, and `education_level`. Unmapped criteria return `UNKNOWN`.
 - **Unimplemented Operators**: `contains` and `any` appear in docstrings/enums but are not implemented in `OPERATOR_MAP`.
 - **Directional Match Score**: Excludes `unknown` mandatory rules from the denominator.
