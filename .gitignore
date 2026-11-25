@@ -50,6 +50,7 @@ Thumbs.db
 .vscode/settings.json
 .idea/
 *.iml
+.claude/
 
 # ── Docker ────────────────────────────────────────────────────────────────────
 docker-compose.override.yml
