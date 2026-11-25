@@ -1,7 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(cmd /c \"dir c:\\\\tempp 2>&1\")"
-    ]
-  }
-}
