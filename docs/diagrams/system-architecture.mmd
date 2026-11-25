@@ -1,0 +1,46 @@
+%% system-architecture: source of truth is docs/03-architecture/SYSTEM_ARCHITECTURE.md
+flowchart LR
+    subgraph Users["Users & Roles"]
+        ST["Student"]
+        CC["College Coordinator"]
+        DR["Document Reviewer"]
+        AD["Admin / Super Admin"]
+    end
+
+    subgraph Frontend["Frontend — Next.js 16 (Vercel / Node 20)"]
+        MW["middleware.ts (Supabase SSR Auth & Role Gate)"]
+        UI["App Router Pages & Components (React 19, Tailwind v4)"]
+        AX["apiClient (Axios + Bearer JWT)"]
+    end
+
+    subgraph Supabase["Supabase Platform"]
+        AUTH["Supabase Auth (/auth/v1/user)"]
+        PG[("PostgreSQL 16 (22 Tables, JSONB Rules)")]
+        STOR["Supabase Storage (Configured Buckets)"]
+    end
+
+    subgraph Backend["Backend — FastAPI (Render / Docker)"]
+        SEC["security.py (JWT Check + RoleChecker RBAC)"]
+        MOD["14 Domain Routers (/api/v1/*)"]
+        ENG["Deterministic Engines (EligibilityEngine & PolicyComparisonEngine)"]
+        DOC["Document Service (Magic Bytes, PyMuPDF, Tesseract OCR, python-docx)"]
+        AI["AI Abstraction (OpenAIProvider)"]
+        WRK["Workers (app/workers/ — Empty Stub)"]
+    end
+
+    EXT["OpenAI API (gpt-4o / gpt-4o-mini)"]
+    DEV["Local Dev Optional: Redis 7 (docker-compose only, unused in code)"]
+
+    Users --> MW --> UI
+    UI -->|Auth Session| AUTH
+    UI --> AX -->|HTTPS REST + Bearer Token| SEC
+    SEC -->|Verify Token| AUTH
+    SEC --> MOD
+    MOD --> ENG
+    MOD --> DOC
+    MOD --> AI
+    AI --> EXT
+    MOD -->|SQLAlchemy 2.0 Async + asyncpg| PG
+    DOC -.->|Configured path, SDK upload not yet wired| STOR
+    WRK -.->|Planned queue consumer| PG
+    DEV -.->|Not connected in backend code| Backend

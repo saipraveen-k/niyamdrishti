@@ -1,0 +1,19 @@
+%% authentication-flow: source of truth is docs/04-technical/AUTHENTICATION.md
+sequenceDiagram
+    participant U as User (Browser)
+    participant FE as Next.js Frontend
+    participant MW as Next.js Middleware
+    participant SUPA as Supabase Auth
+    participant API as FastAPI Backend
+
+    U->>FE: Sign up / Sign in (/register or /login)
+    FE->>SUPA: signUp() / signInWithPassword() / signInWithOAuth('google')
+    SUPA-->>FE: Session + Access JWT (user_metadata.app_role)
+    FE->>FE: useAuth() stores access_token in localStorage ('nd_access_token')
+    U->>MW: Navigate to protected route (/dashboard, /admin, ...)
+    MW->>SUPA: supabase.auth.getUser() via SSR cookies
+    SUPA-->>MW: Verified user or null
+    FE->>API: API Request + Authorization: Bearer <JWT>
+    API->>SUPA: GET /auth/v1/user (apikey + Bearer token)
+    SUPA-->>API: 200 OK {id, email, role, user_metadata}
+    API-->>FE: AuthUser constructed -> Route executes

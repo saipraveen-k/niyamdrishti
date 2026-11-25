@@ -17,7 +17,7 @@ flowchart BT
 
 | Layer | Tooling | Current Status |
 |---|---|---|
-| **Backend Pure Unit Tests** | `pytest` (`test_eligibility_engine.py`, `test_comparison_engine.py`) | **29 tests**: 27 pass, 2 fail (compound rules bug) |
+| **Backend Pure Unit Tests** | `pytest` (`test_eligibility_engine.py`, `test_comparison_engine.py`) | **29 tests**: all pass |
 | **Backend HTTP Smoke Tests** | `pytest-asyncio` + `httpx.AsyncClient` (`test_health.py`, `test_sanity.py`) | **6 tests**: 6 pass |
 | **Backend API Integration Tests** | `tests/integration` (referenced in `ci.yml` `--ignore=tests/integration`) | Directory does not exist yet (`0` tests) |
 | **Frontend Static Analysis** | `npx tsc --noEmit`, `npm run lint` | `tsc` passes; `eslint` reports 9 errors, 18 warnings |

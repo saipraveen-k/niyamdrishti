@@ -1,0 +1,16 @@
+%% eligibility-engine: source of truth is docs/02-product/ELIGIBILITY_ENGINE.md
+flowchart TD
+    A["Student Profile + Approved SchemeRule List"] --> B["Loop Over Each Rule"]
+    B --> C["Map (rule_category, rule_key) to StudentProfile Field"]
+    C --> D{"Field Present & Non-None?"}
+    D -- "No" --> E["CriterionResult: UNKNOWN + add to missing_fields"]
+    D -- "Yes" --> F{"Compound (logic: and/or)?"}
+    F -- "Yes" --> G["_evaluate_compound()"]
+    F -- "No" --> H["_apply_operator(): lte, lt, gte, gt, eq, neq, in, not_in"]
+    H --> I["PASSED or FAILED with Explanation"]
+    E & G & I --> J["Aggregate Mandatory Rules"]
+    J --> K{"Any Mandatory FAILED?"}
+    K -- "Yes" --> L["Overall: FAILED"]
+    K -- "No" --> M{"Any Mandatory UNKNOWN?"}
+    M -- "Yes" --> N["Overall: UNKNOWN"]
+    M -- "No" --> O["Overall: PASSED"]

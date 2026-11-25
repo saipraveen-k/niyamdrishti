@@ -1,0 +1,10 @@
+%% admin-workflow: source of truth is docs/02-product/ADMIN_WORKFLOW.md
+flowchart TD
+    A["Admin / Super Admin Authenticated"] --> B["Create Scheme (POST /api/v1/admin/schemes)"]
+    B --> C["Upload Official Document (POST /api/v1/documents/upload)"]
+    C --> D["File Validation: Size <= 20MB, MIME, Magic Bytes, SHA-256"]
+    D --> E["Create SchemeDocument + Queued DocumentProcessingJob"]
+    E --> F["Reviewer Approves Extracted Rules (/reviewer)"]
+    F --> G["Publish Scheme (POST /api/v1/admin/schemes/{id}/publish)"]
+    G --> H["Compare Versions (POST /api/v1/policy-comparisons)"]
+    A --> I["Check Health & Jobs (/admin/system-health, /admin/jobs)"]

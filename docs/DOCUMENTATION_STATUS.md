@@ -55,7 +55,7 @@
 
 The following items are accurately documented as incomplete or needing runtime verification rather than being marked finished:
 
-1. **Compound Eligibility Evaluation Bug**: `EligibilityEngine._evaluate_compound()` fails 2 unit tests (`test_compound_and_all_pass`, `test_compound_or_one_passes`) in `pytest`.
+1. ~~**Compound Eligibility Evaluation Bug**~~ — **Fixed**: compound `and`/`or` rules now inherit the parent rule's category/key, and `test_compound_and_all_pass` / `test_compound_or_one_passes` pass (all 15 eligibility tests green).
 2. **Frontend–Backend Contract Alignment**: Five frontend pages (`eligibility`, `changelens`, `lifemap`, `applications`, `assistant`) have endpoint path or JSON shape mismatches against backend routers.
 3. **Missing Frontend Pages**: `/about`, `/privacy`, `/terms`, `/forgot-password`, `/auth/auth-code-error`, `/coordinator`, `/notifications`, `/settings`, and `/admin/{schemes,documents,jobs,users}` are linked in the UI without page files yet.
 4. **Live Runtime Integration Not Executed**: No live Supabase instance, live OpenAI API key, or running PostgreSQL database was exercised in this static + unit-test audit—behavior of `verify_supabase_token()`, `OpenAIProvider`, and `seed_schemes.py` against live services is documented from source code inspection rather than live integration test runs.

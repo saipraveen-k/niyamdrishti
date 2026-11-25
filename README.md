@@ -309,7 +309,7 @@ See [Team Overview](docs/10-team-and-project/TEAM_OVERVIEW.md) and [Individual C
 
 ## Known Limitations
 
-- `EligibilityEngine._evaluate_compound()` has a field-mapping bug causing 2 compound-rule unit tests to fail.
+- ~~Compound-rule field-mapping bug~~ — fixed: compound `and`/`or` rules now inherit the parent rule's category/key, and `test_compound_and_all_pass` / `test_compound_or_one_passes` pass (all 15 eligibility tests green).
 - Background document processing (`app/workers/`), Supabase Storage upload SDK calls, `StudentImpact` computation, and RAG vector retrieval are not yet wired.
 - Frontend pages for `/changelens`, `/lifemap`, `/applications`, `/assistant`, and `/eligibility` have API route/schema mismatches with backend routers.
 - Alembic `versions/` has no migration scripts yet and `env.py` has stale imports.

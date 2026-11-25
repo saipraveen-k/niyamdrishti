@@ -1,0 +1,12 @@
+%% ai-document-processing: source of truth is docs/03-architecture/DOCUMENT_PROCESSING.md
+flowchart TD
+    A["POST /api/v1/documents/upload (Admin/Super Admin)"] --> B["validate_upload(data, filename, declared_mime)"]
+    B -->|"Size > 20MB or MIME/Magic mismatch"| ERR["HTTP 422 Unprocessable Entity"]
+    B -->|Valid| HASH["compute_sha256(data)"]
+    HASH --> DB["Save SchemeDocument + DocumentProcessingJob (status='queued')"]
+    DB -->|"Current: stops here (worker not wired)"| Q["Queued Job in PostgreSQL"]
+    Q -.->|"Implemented in service.py, awaiting worker"| ROUTE["extract_text(data, mime_type)"]
+    ROUTE -->|PDF| PDF["extract_text_from_pdf() via PyMuPDF (<= 200 pages)"]
+    PDF -->|"Page text < 50 chars"| OCR["_ocr_pdf_pages() @ 300 DPI via pytesseract (eng+tel -> eng)"]
+    ROUTE -->|DOCX| DOCX["extract_text_from_docx() paragraphs + tables"]
+    ROUTE -->|JPEG/PNG/WebP| IMG["extract_text_from_image() via pytesseract"]

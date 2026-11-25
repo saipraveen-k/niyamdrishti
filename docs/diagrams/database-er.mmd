@@ -1,0 +1,210 @@
+%% database-er: source of truth is docs/05-database-and-api/ENTITY_RELATIONSHIP.md
+erDiagram
+    user_profiles ||--o| student_profiles : "has"
+    colleges ||--o{ student_profiles : "attended_by"
+    user_profiles ||--o{ college_memberships : "member"
+    colleges ||--o{ college_memberships : "has_coordinator"
+    user_profiles ||--o{ document_uploads : "uploads"
+    user_profiles ||--o{ student_scheme_evaluations : "receives"
+    user_profiles ||--o{ saved_schemes : "bookmarks"
+    user_profiles ||--o{ student_impacts : "affected_by"
+    user_profiles ||--o{ action_plans : "owns"
+    user_profiles ||--o{ student_applications : "tracks"
+
+    schemes ||--o{ scheme_sources : "cited_by"
+    schemes ||--o{ scheme_documents : "has_document"
+    schemes ||--o{ scheme_versions : "versioned_as"
+    scheme_documents ||--o{ scheme_versions : "source_for"
+    scheme_versions ||--o{ scheme_rules : "contains"
+    schemes ||--o{ policy_comparisons : "compared_in"
+    scheme_versions ||--o{ policy_comparisons : "old_or_new_version"
+    policy_comparisons ||--o{ policy_change_events : "records"
+
+    schemes ||--o{ student_scheme_evaluations : "evaluated_for"
+    scheme_versions ||--o{ student_scheme_evaluations : "evaluated_against"
+    schemes ||--o{ saved_schemes : "bookmarked_in"
+    schemes ||--o{ student_impacts : "impacted_scheme"
+    policy_comparisons ||--o{ student_impacts : "triggers"
+    schemes ||--o{ action_plans : "targeted_by"
+    action_plans ||--o{ action_tasks : "contains"
+    schemes ||--o{ student_applications : "applied_to"
+    student_applications ||--o{ application_status_history : "audits"
+
+    document_processing_jobs ||--o{ document_processing_attempts : "logs"
+
+    user_profiles {
+        uuid id PK
+        string full_name
+        string email
+        string app_role
+        string preferred_language
+    }
+
+    student_profiles {
+        uuid id PK
+        uuid user_id FK
+        uuid college_id FK
+        string state
+        string caste_category
+        string education_level
+        float marks_percentage
+        float cgpa
+        int annual_family_income
+    }
+
+    colleges {
+        uuid id PK
+        string name
+        string code
+        string state
+    }
+
+    college_memberships {
+        uuid id PK
+        uuid user_id FK
+        uuid college_id FK
+    }
+
+    admin_invitations {
+        uuid id PK
+        string email
+        string invited_role
+        string token_hash
+        boolean is_accepted
+    }
+
+    schemes {
+        uuid id PK
+        string name
+        string slug
+        string state
+        string scheme_type
+        boolean is_published
+        uuid latest_version_id
+    }
+
+    scheme_sources {
+        uuid id PK
+        uuid scheme_id FK
+        string source_type
+        string source_url
+    }
+
+    scheme_documents {
+        uuid id PK
+        uuid scheme_id FK
+        string storage_path
+        string sha256_hash
+    }
+
+    scheme_versions {
+        uuid id PK
+        uuid scheme_id FK
+        int version_number
+        uuid source_document_id FK
+        boolean is_active
+        boolean is_approved
+    }
+
+    scheme_rules {
+        uuid id PK
+        uuid version_id FK
+        string rule_category
+        string rule_key
+        jsonb condition
+        string review_status
+    }
+
+    policy_comparisons {
+        uuid id PK
+        uuid scheme_id FK
+        uuid old_version_id FK
+        uuid new_version_id FK
+        jsonb summary
+    }
+
+    policy_change_events {
+        uuid id PK
+        uuid comparison_id FK
+        string change_type
+        string rule_category
+        string rule_key
+        string significance
+    }
+
+    document_uploads {
+        uuid id PK
+        uuid user_id FK
+        string document_type
+        string storage_path
+        datetime expires_at
+    }
+
+    document_processing_jobs {
+        uuid id PK
+        uuid document_id
+        string job_type
+        string idempotency_key
+        string status
+    }
+
+    document_processing_attempts {
+        uuid id PK
+        uuid job_id FK
+        int attempt_number
+        string status
+    }
+
+    student_scheme_evaluations {
+        uuid id PK
+        uuid student_id FK
+        uuid scheme_id FK
+        uuid version_id FK
+        string overall_result
+        float match_score
+    }
+
+    saved_schemes {
+        uuid id PK
+        uuid student_id FK
+        uuid scheme_id FK
+    }
+
+    student_impacts {
+        uuid id PK
+        uuid student_id FK
+        uuid comparison_id FK
+        uuid scheme_id FK
+        string old_eligibility
+        string new_eligibility
+        boolean eligibility_changed
+    }
+
+    action_plans {
+        uuid id PK
+        uuid student_id FK
+        uuid scheme_id FK
+        string status
+    }
+
+    action_tasks {
+        uuid id PK
+        uuid plan_id FK
+        string task_type
+        string title
+        boolean is_completed
+    }
+
+    student_applications {
+        uuid id PK
+        uuid student_id FK
+        uuid scheme_id FK
+        string status
+    }
+
+    application_status_history {
+        uuid id PK
+        uuid application_id FK
+        string old_status
+        string new_status
+    }
