@@ -36,7 +36,7 @@ class Settings(BaseSettings):
     database_url_sync: Optional[str] = None
 
     # AI
-    ai_provider: Literal["openai", "anthropic"] = "openai"
+    ai_provider: Literal["openai", "anthropic", "anthropic_with_openai_fallback"] = "openai"
     openai_api_key: Optional[str] = None
     openai_model: str = "gpt-4o-mini"
     openai_extraction_model: str = "gpt-4o"
@@ -106,6 +106,9 @@ class Settings(BaseSettings):
         if self.ai_provider == "openai":
             return bool(self.openai_api_key)
         elif self.ai_provider == "anthropic":
+            return bool(self.anthropic_api_key)
+        elif self.ai_provider == "anthropic_with_openai_fallback":
+            # Requires at least the primary (Claude) key; fallback is optional but recommended
             return bool(self.anthropic_api_key)
         return False
 

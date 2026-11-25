@@ -49,8 +49,8 @@ async def chat(
         )
     
     try:
-        from app.ai.providers.openai_provider import OpenAIProvider
-        provider = OpenAIProvider()
+        from app.ai import get_ai_provider
+        provider = get_ai_provider()
         
         messages = [{"role": m.role, "content": m.content} for m in request.messages]
         
