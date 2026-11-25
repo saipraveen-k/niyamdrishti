@@ -49,7 +49,7 @@ TestSessionLocal = async_sessionmaker(
 )
 
 
-@pytest_asyncio.fixture(scope="session", autouse=True)
+@pytest_asyncio.fixture(scope="session", loop_scope="session", autouse=True)
 async def create_tables():
     """Create all tables in the in-memory SQLite DB once per session."""
     async with test_engine.begin() as conn:
@@ -60,7 +60,7 @@ async def create_tables():
         await conn.run_sync(Base.metadata.drop_all)
 
 
-@pytest_asyncio.fixture
+@pytest_asyncio.fixture(loop_scope="session")
 async def db_session():
     """Return a fresh DB session per test, rolled back after each test."""
     async with TestSessionLocal() as session:
@@ -68,7 +68,7 @@ async def db_session():
         await session.rollback()
 
 
-@pytest_asyncio.fixture
+@pytest_asyncio.fixture(loop_scope="session")
 async def client(db_session: AsyncSession):
     """
     HTTP test client with the DB dependency overridden to use the
